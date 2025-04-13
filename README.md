@@ -2,6 +2,27 @@
 
 The app does nothing... much & I mean it. Just a playground for messing with a node HID library to blink a Delcom light (this one I believe https://www.delcomproducts.com/products_USBLMP.asp)
 
+### reqs
+
+    npm v10.9.2^
+    a damn light...
+
+### build
+
+    npm install && npm package
+
+### run
+
+Either -
+
+    open ./out/elec_hid_test-darwin-arm64/elec_hid_test.app
+
+OR
+
+    npm run start
+
+### WAT?
+
 If new to Electron, this app framework splits work into two pieces within the process - 
 
     chrome for ui 
