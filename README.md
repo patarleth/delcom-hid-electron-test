@@ -21,6 +21,8 @@ OR
 
     npm run start
 
+![screenshot](images/screenshot.png)
+
 ### WAT?
 
 If new to Electron, this app framework splits work into two pieces within the process - 
@@ -37,5 +39,3 @@ Communication between node and chrome is handled using ipcMain and ipcRenderer.
 [index.html](index.html) ...uh.. yah.. is the html :slightly_smiling_face: 
 
 NOTE: In this app is indeed very stupid & ugly... but it will blink a light when plugged in ;)
-
-![screenshot](images/screenshot.png)
