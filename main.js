@@ -70,6 +70,10 @@ ipcMain.handle('hid_light_orange', async (event) => {
 })
 ipcMain.handle('hid_light_off', async (event) => {
   blinken.hidLightFeatureOff()
+  blinken.stop()
+})
+ipcMain.handle('hid_light_blink', async (event) => {
+  blinken.blink()
 })
 
 const createWindow = () => {

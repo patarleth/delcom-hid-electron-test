@@ -55,6 +55,9 @@ var sendLightOrange = (event) => {
 var sendLightOff = (event) => {
     ipcRenderer.invoke('hid_light_off', "on")
 }
+var sendBlink = (event) => {
+    ipcRenderer.invoke('hid_light_blink', "on")
+}
 
 var sendLightCurrent = () => {
     ipcRenderer.invoke('hid_light_current')
@@ -82,6 +85,9 @@ window.onload = function(e) {
     
     offButton = document.getElementById("off_button")
     offButton.onclick = sendLightOff
+
+    blinkButton = document.getElementById("blink_button")
+    blinkButton.onclick = sendBlink
 
     sendLightCurrent()
 }

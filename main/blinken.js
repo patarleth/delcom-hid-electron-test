@@ -14,6 +14,10 @@ HID.setDriverType('libusb');
   "usagePage": 65280
 }
 */
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 class Blinken {
     static OFF = 255
     static GREEN = 254
@@ -29,52 +33,110 @@ class Blinken {
         return (next.manufacturer === "Delcom Products Inc.")
     }
 
+    lastColor = Blinken.OFF
+    changeHandlers = {}
+    blinking = false
+    onTime = 200
+    offTime = 200
+
     constructor(hidLight) {
         this.device = hidLight;
         this.hid = new HID.HID(hidLight.vendorId, hidLight.productId)
     }
-    
-    changeHandlers = {}
 
     onStatusChange(status, fn) {
         this.changeHandlers[status] = fn
     }
 
-    hidLightFeatureOff() {
-        this.hid.write([0x65, 0x0C, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00])
-        if(this.changeHandlers[Blinken.OFF]) {
+    stop() {
+        if (this.blinking) {
+            //console.log("stopping blinking")
+        }
+        this.blinking = false
+    }
+
+    async blink(onTime, offTime) {
+        if (onTime) {
+            this.onTime = onTime
+        }
+        if (offTime) {
+            this.offTime = offTime
+        }
+        if (this.lastColor !== Blinken.OFF) {
+            this.blinking = true
+            while (this.blinking) {
+                this.hidLightFeature(this.lastColor)
+                await sleep(this.onTime)
+
+                if (this.blinking) {
+                    this.hidLightFeature(Blinken.OFF)
+                    await sleep(this.offTime)
+                }
+            }
+        }
+    }
+    hidLightFeature(color) {
+        switch (color) {
+            case Blinken.RED:
+                this.hidLightFeatureRed(false)
+                break
+            case Blinken.GREEN:
+                this.hidLightFeatureGreen(false)
+                break
+            case Blinken.YELLOW:
+                this.hidLightFeatureYellow(false)
+                break
+            case Blinken.ORANGE:
+                this.hidLightFeatureOrange(false)
+                break
+            case Blinken.OFF:
+                this.hidLightFeatureOff(false)
+                break
+            default:
+                console.log("unknown blinken color code " + color)
+        }
+    }
+    setColor(byteArray, color, setLastColor) {
+        this.hid.write(byteArray)
+        if (setLastColor) {
+            this.lastColor = color
+        }
+    }
+    hidLightFeatureOff(setLastColor = true) {
+        this.setColor([0x65, 0x0C, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00], Blinken.OFF, setLastColor)
+        if (this.changeHandlers[Blinken.OFF]) {
             this.changeHandlers[Blinken.OFF]()
         }
         // console.log("after off - device current value " + JSON.stringify(hid.getFeatureReport(1, 8)))
         // after off - device current value [255,1,255,255,0,0,0,0]
     }
-    hidLightFeatureGreen() {
-        this.hid.write([0x65, 0x0C, 0x01, 0xFF, 0x00, 0x00, 0x00, 0x00])
-        if(this.changeHandlers[Blinken.GREEN]) {
+    hidLightFeatureGreen(setLastColor = true) {
+        this.setColor([0x65, 0x0C, 0x01, 0xFF, 0x00, 0x00, 0x00, 0x00], Blinken.GREEN, setLastColor)
+        if (this.changeHandlers[Blinken.GREEN]) {
             this.changeHandlers[Blinken.GREEN]()
         }
         // console.log("after green - device current value " + JSON.stringify(hid.getFeatureReport(1, 8)))
         // after green - device current value [255,1,254,255,0,0,0,0]
     }
-    hidLightFeatureRed() {
-        this.hid.write([0x65, 0x0C, 0x02, 0xFF, 0x00, 0x00, 0x00, 0x00])
-        if(this.changeHandlers[Blinken.RED]) {
+    hidLightFeatureRed(setLastColor = true) {
+        this.setColor([0x65, 0x0C, 0x02, 0xFF, 0x00, 0x00, 0x00, 0x00], Blinken.RED, setLastColor)
+        if (this.changeHandlers[Blinken.RED]) {
             this.changeHandlers[Blinken.RED]()
         }
         // console.log("after red - device current value " + JSON.stringify(hid.getFeatureReport(1, 8)))
         // after red - device current value [255,1,253,255,0,0,0,0]
     }
-    hidLightFeatureYellow() {
-        this.hid.write([0x65, 0x0C, 0x04, 0xFF, 0x00, 0x00, 0x00, 0x00])
-        if(this.changeHandlers[Blinken.YELLOW]) {
+    hidLightFeatureYellow(setLastColor = true) {
+        this.setColor([0x65, 0x0C, 0x04, 0xFF, 0x00, 0x00, 0x00, 0x00], Blinken.YELLOW, setLastColor)
+        if (this.changeHandlers[Blinken.YELLOW]) {
             this.changeHandlers[Blinken.YELLOW]()
         }
         // console.log("after yellow - device current value " + JSON.stringify(hid.getFeatureReport(1, 8)))
         // after yellow - device current value [255,1,251,255,0,0,0,0]
     }
-    hidLightFeatureOrange() {
-        this.hid.write([0x65, 0x0C, 0x04, 0xFF, 0x00, 0x00, 0x00, 0x00])
-        if(this.changeHandlers[Blinken.ORANGE]) {
+    hidLightFeatureOrange(setLastColor = true) {
+        this.setColor([0x65, 0x0C, 0x04, 0xFF, 0x00, 0x00, 0x00, 0x00], Blinken.ORANGE, setLastColor)
+        if (this.changeHandlers[Blinken.ORANGE]) {
             this.changeHandlers[Blinken.ORANGE]()
         }
         // console.log("after yellow - device current value " + JSON.stringify(hid.getFeatureReport(1, 8)))
@@ -83,10 +145,14 @@ class Blinken {
     hidLightStatus() {
         var current = this.hid.getFeatureReport(1, 8)
         var ledVal = current[2]
+        this.lastColor = ledVal
         return ledVal
     }
-    close() {
+    async close() {
         console.log("closing hid device " + JSON.stringify(this.device))
+        this.stop()
+        var waitTime = (this.onTime > this.offTime) ? this.onTime : this.offTime
+        await sleep(waitTime)
         try {
             this.hid.close()
             console.log("hid device closed")
