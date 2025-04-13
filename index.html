@@ -5,7 +5,7 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self';" />
     <meta http-equiv="X-Content-Security-Policy" content="script-src 'self'" />
-    <title>HIDs gotta hid!</title>
+    <title>Delcom HID blinken light</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="./css/uikit.min.css" />
@@ -18,22 +18,32 @@
     </style>
   </head>
   <body class="uk-padding">
-    <h1>HID test 🎮</h1>
-    <div class="uk-width-1-3">
+    <h1>Delcom HID blinken light 🚨</h1>
+    <div class="uk-padding uk-width-1-3">
       <object class="uk-width-1-3 svgClass" id="light_svg" data="./images/light.svg" type="image/svg+xml">
         <img src="./images/icon.png" />
       </object>
     </div>
-    <div>
+    <div class="uk-padding">
       <button class="uk-button uk-button-default" type="button" id="off_button">off</button>
       <button class="uk-button uk-button-default" type="button" id="red_button">red</button>
       <button class="uk-button uk-button-default" type="button" id="green_button">green</button>
       <button class="uk-button uk-button-default" type="button" id="orange_button">orange</button>
-      <button class="uk-button uk-button-default" type="button" id="blink_button">blink</button>
     </div>
-    <div>
-      <span>on time: <input type="range" id="ontime_range" name="on" min="200" max="750"></span>
-      <span>off time: <input type="range" id="offtime_range" name="off" min="200" max="750"></span>
+    <div class="uk-padding">
+      <div>
+        <button class="uk-button uk-button-default" type="button" id="blink_button">blink</button>
+      </div>
+      <div>
+        <div>
+          <span>on time: <input type="range" id="ontime_range" name="on" min="100" max="750" step="20" value="200"></span>
+          <span id="ontime_badge" class="uk-badge">200ms</span>
+        </div>
+        <div>
+          <span>off time: <input type="range" id="offtime_range" name="off" min="100" max="750" step="20" value="200"></span>
+          <span id="offtime_badge" class="uk-badge">200ms</span>
+        </div>
+      </div>
     </div>
-    </body>
+  </body>
 </html>

@@ -75,6 +75,14 @@ ipcMain.handle('hid_light_off', async (event) => {
 ipcMain.handle('hid_light_blink', async (event) => {
   blinken.blink()
 })
+ipcMain.handle('hid_light_blink_ontime', async (event, val) => {
+  blinken.onTime = val
+  //console.log("blinken.onTime " + blinken.onTime)
+})
+ipcMain.handle('hid_light_blink_offtime', async (event, val) => {
+  blinken.offTime = val
+  //console.log("blinken.offTime " + blinken.offTime)
+})
 
 const createWindow = () => {
   const win = new BrowserWindow({

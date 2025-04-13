@@ -12,6 +12,12 @@ var greenButton = null
 var orangeButton = null
 var offButton = null
 
+var blinkButton = null
+var ontimeRange = null
+var ontimeBadge = null
+var offtimeRange = null
+var offtimeBadge = null
+
 var lightOff = () => {
     grayPart.style.fill = offColor
     whitePart.style.fill = "#FFFFFF" 
@@ -63,6 +69,20 @@ var sendLightCurrent = () => {
     ipcRenderer.invoke('hid_light_current')
 }
 
+var setOntimeBadge = (event) => {
+    ontimeBadge.innerHTML = ontimeRange.value+"ms"
+}
+var sendOntime = (event) => {
+    ipcRenderer.invoke('hid_light_blink_ontime', parseInt(ontimeRange.value))
+}
+
+var setOfftimeBadge = (event) => {
+    offtimeBadge.innerHTML = offtimeRange.value+"ms"
+}
+var sendOfftime = (event) => {
+    ipcRenderer.invoke('hid_light_blink_offtime', parseInt(offtimeRange.value))
+}
+
 window.onload = function(e) {
     console.log('renderer.js to the rescue!')
     svg = document.getElementById("light_svg").contentDocument
@@ -88,7 +108,17 @@ window.onload = function(e) {
 
     blinkButton = document.getElementById("blink_button")
     blinkButton.onclick = sendBlink
-
+    
+    ontimeBadge = document.getElementById("ontime_badge")
+    ontimeRange = document.getElementById("ontime_range")
+    ontimeRange.onchange = sendOntime
+    ontimeRange.oninput = setOntimeBadge
+    
+    offtimeBadge = document.getElementById("offtime_badge")
+    offtimeRange = document.getElementById("offtime_range")
+    offtimeRange.onchange = sendOfftime
+    offtimeRange.oninput = setOfftimeBadge
+    
     sendLightCurrent()
 }
 
