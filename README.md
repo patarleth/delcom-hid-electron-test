@@ -1,4 +1,4 @@
-# electron test
+# Electron Delcom HID blinken light test 🚨
 
 The app does nothing... much & I mean it. Just a playground for messing with a node HID library to blink a Delcom light (this one I believe https://www.delcomproducts.com/products_USBLMP.asp)
 
