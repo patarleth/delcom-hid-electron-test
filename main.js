@@ -2,8 +2,6 @@ const { app, BrowserWindow, nativeImage, ipcMain } = require('electron')
 const { Blinken } = require('./main/blinken')
 
 const path = require('path')
-const HID = require('node-hid');
-HID.setDriverType('libusb');
 
 const { Tray, Menu } = require('electron/main')
 const { icons } = require('./icons')
@@ -60,23 +58,18 @@ ipcMain.handle('hid_light_current', async (event) => {
 
 ipcMain.handle('hid_light_red', async (event) => {
   blinken.hidLightFeatureRed()
-  win.webContents.send("hid_light_red", "on")
 })
 ipcMain.handle('hid_light_green', async (event) => {
   blinken.hidLightFeatureGreen()
-  win.webContents.send("hid_light_green", "on")
 })
 ipcMain.handle('hid_light_yellow', async (event) => {
   blinken.hidLightFeatureYellow()
-  win.webContents.send("hid_light_yellow", "on")
 })
 ipcMain.handle('hid_light_orange', async (event) => {
   blinken.hidLightFeatureYellow()
-  win.webContents.send("hid_light_orange", "on")
 })
 ipcMain.handle('hid_light_off', async (event) => {
   blinken.hidLightFeatureOff()
-  win.webContents.send("hid_light_off", "on")
 })
 
 const createWindow = () => {
@@ -100,18 +93,23 @@ const createWindow = () => {
     win.webContents.openDevTools()
   }
 
-  var devices = HID.devices();
+  var devices = Blinken.devices();
   var device = null
   for (var i = 0; i < devices.length; i++) {
     var next = devices[i]
     if (next.manufacturer === "Delcom Products Inc.") {
       // console.info(JSON.stringify(next, null, 2))
-      device = new HID.HID(next.vendorId, next.productId)
+      device = next
       break
     }
   }
   if (device) {
     blinken = new Blinken(device)
+    blinken.onStatusChange(Blinken.RED, () => {win.webContents.send("hid_light_red", "on")})
+    blinken.onStatusChange(Blinken.GREEN, () => {win.webContents.send("hid_light_green", "on")})
+    blinken.onStatusChange(Blinken.YELLOW, () => {win.webContents.send("hid_light_yellow", "on")})
+    blinken.onStatusChange(Blinken.ORANGE, () => {win.webContents.send("hid_light_orange", "on")})
+    blinken.onStatusChange(Blinken.OFF, () => {win.webContents.send("hid_light_off", "on")})    
   }
 }
 
