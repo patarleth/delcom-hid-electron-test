@@ -96,10 +96,8 @@ const createWindow = () => {
   var devices = Blinken.devices();
   var device = null
   for (var i = 0; i < devices.length; i++) {
-    var next = devices[i]
-    if (next.manufacturer === "Delcom Products Inc.") {
-      // console.info(JSON.stringify(next, null, 2))
-      device = next
+    if (Blinken.canBlink(devices[i])) {
+      device = devices[i]
       break
     }
   }

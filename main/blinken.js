@@ -25,6 +25,10 @@ class Blinken {
         return HID.devices()
     }
 
+    static canBlink(next) {
+        return (next.manufacturer === "Delcom Products Inc.")
+    }
+
     constructor(hidLight) {
         this.device = hidLight;
         this.hid = new HID.HID(hidLight.vendorId, hidLight.productId)
