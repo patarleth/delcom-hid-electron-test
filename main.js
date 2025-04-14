@@ -61,7 +61,7 @@ var handleCurrent = (ledVal) => {
 ipcMain.handle('hid_light_current', async (event) => {
   var ledVal = Blinken.OFF
   if (blinken) {
-    handleCurrent( blinken.hidLightStatus() )
+    handleCurrent(blinken.hidLightStatus())
   } else {
     blinkenClient.send(hid_light_current, "on")
   }
@@ -92,8 +92,8 @@ ipcMain.handle('hid_light_orange', async (event) => {
   }
 })
 ipcMain.handle('hid_light_off', async (event) => {
-  if (blinken) { 
-    blinken.hidLightFeatureOff() 
+  if (blinken) {
+    blinken.hidLightFeatureOff()
     blinken.stop()
   }
   if (blinkenClient) {
@@ -101,9 +101,13 @@ ipcMain.handle('hid_light_off', async (event) => {
   }
 })
 ipcMain.handle('hid_light_blink', async (event) => {
-  if (blinken) { blinken.blink() }
-  if (blinkenClient) {
-    blinkenClient.send('hid_light_blink', "on")
+  if (blinken.blinking) {
+    
+  } else {
+    blinken.blink()
+    if (blinkenClient) {
+      blinkenClient.send('hid_light_blink', "on")
+    }
   }
 })
 ipcMain.handle('hid_light_blink_ontime', async (event, val) => {
@@ -150,15 +154,19 @@ const createWindow = () => {
       break
     }
   }
-  if (device) {
-    // light is plugged in, create blinke with device and enable server 
-    blinken = new Blinken(device)
-    blinken.onStatusChange(Blinken.RED, () => { win.webContents.send("hid_light_red", "on") })
-    blinken.onStatusChange(Blinken.GREEN, () => { win.webContents.send("hid_light_green", "on") })
-    blinken.onStatusChange(Blinken.YELLOW, () => { win.webContents.send("hid_light_yellow", "on") })
-    blinken.onStatusChange(Blinken.ORANGE, () => { win.webContents.send("hid_light_orange", "on") })
-    blinken.onStatusChange(Blinken.OFF, () => { win.webContents.send("hid_light_off", "on") })
 
+  // create the blinken light EVEN if the device is not found
+  blinken = new Blinken(device)
+
+  // only fires when the light is plugged in, create blinken with device and enable server 
+  blinken.onStatusChange(Blinken.RED, () => { win.webContents.send("hid_light_red", "on") })
+  blinken.onStatusChange(Blinken.GREEN, () => { win.webContents.send("hid_light_green", "on") })
+  blinken.onStatusChange(Blinken.YELLOW, () => { win.webContents.send("hid_light_yellow", "on") })
+  blinken.onStatusChange(Blinken.ORANGE, () => { win.webContents.send("hid_light_orange", "on") })
+  blinken.onStatusChange(Blinken.OFF, () => { win.webContents.send("hid_light_off", "on") })
+
+  if (device) {
+    // the Delcom HID device is plugged in so create a server for it
     blinkenServer = new BlinkenTLSServer()
     blinkenServer.addHandler("hid_light_red", (data) => { blinken.hidLightFeatureRed() })
     blinkenServer.addHandler("hid_light_green", (data) => { blinken.hidLightFeatureGreen() })
@@ -173,11 +181,12 @@ const createWindow = () => {
     blinkenServer.start()
   } else {
     console.log("Delcom light not found defaulting to TLS client mode\n")
+    // using a self-signed cert, so sue me
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
     blinkenClient = new BlinkenTLSClient()
-    blinkenClient.addHandler("hid_light_current", (data) => { handleCurrent( data ); win.webContents.send("hid_light_current", data) })
-    
+    blinkenClient.addHandler("hid_light_current", (data) => { handleCurrent(data); win.webContents.send("hid_light_current", data) })
+
     blinkenClient.addHandler("hid_light_red", (data) => { win.webContents.send("hid_light_red", data) })
     blinkenClient.addHandler("hid_light_green", (data) => { win.webContents.send("hid_light_green", data) })
     blinkenClient.addHandler("hid_light_yellow", (data) => { win.webContents.send("hid_light_yellow", data) })

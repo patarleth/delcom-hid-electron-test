@@ -41,7 +41,9 @@ class Blinken {
 
     constructor(hidLight) {
         this.device = hidLight;
-        this.hid = new HID.HID(hidLight.vendorId, hidLight.productId)
+        if (hidLight) {
+            this.hid = new HID.HID(hidLight.vendorId, hidLight.productId)
+        }
     }
 
     onStatusChange(status, fn) {
@@ -75,6 +77,7 @@ class Blinken {
             }
         }
     }
+
     hidLightFeature(color) {
         switch (color) {
             case Blinken.RED:
@@ -97,7 +100,9 @@ class Blinken {
         }
     }
     setColor(byteArray, color, setLastColor) {
-        this.hid.write(byteArray)
+        if (this.hid) {
+            this.hid.write(byteArray)
+        }
         if (setLastColor) {
             this.lastColor = color
         }
@@ -143,8 +148,11 @@ class Blinken {
         // after yellow - device current value [255,1,251,255,0,0,0,0]
     }
     hidLightStatus() {
-        var current = this.hid.getFeatureReport(1, 8)
-        var ledVal = current[2]
+        var ledVal = Blinken.OFF
+        if (this.hid) {
+            var current = this.hid.getFeatureReport(1, 8)
+            ledVal = current[2]
+        }
         this.lastColor = ledVal
         return ledVal
     }
@@ -153,11 +161,13 @@ class Blinken {
         this.stop()
         var waitTime = (this.onTime > this.offTime) ? this.onTime : this.offTime
         await sleep(waitTime)
-        try {
-            this.hid.close()
-            console.log("hid device closed")
-        } catch (error) {
-            console.log(error)
+        if (this.hid) {
+            try {
+                this.hid.close()
+                console.log("hid device closed")
+            } catch (error) {
+                console.log(error)
+            }
         }
     }
 }
