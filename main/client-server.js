@@ -81,6 +81,10 @@ class BlinkenTLSServer {
             this.server.destroy()
         }
     }
+
+    close() {
+        this.stop()
+    }
 }
 
 class BlinkenTLSClient {
@@ -174,6 +178,10 @@ class BlinkenTLSClient {
             }
         }
         return response
+    }
+
+    close() {
+        console.log("BlinkenTLSClient closing")
     }
 }
 

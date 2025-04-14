@@ -1,5 +1,6 @@
 const { app, BrowserWindow, nativeImage, ipcMain } = require('electron')
 const { Blinken } = require('./main/blinken')
+const { BlinkenTLSServer, BlinkenTLSClient } = require('./main/client-server')
 
 const path = require('path')
 
@@ -18,6 +19,8 @@ if (env === 'development') {
 }
 
 var blinken = null
+var blinkenServer = null
+var blinkenClient = null
 
 var hidLightFeatureBusted = (hid, ledVal) => {
   var buf = new ArrayBuffer(8)
@@ -39,8 +42,7 @@ var hidLightFeatureBusted = (hid, ledVal) => {
   hid.write(new Int8Array(buf))
 }
 
-ipcMain.handle('hid_light_current', async (event) => {
-  var ledVal = blinken.hidLightStatus()
+var handleCurrent = (ledVal) => {
   if (ledVal == Blinken.OFF) {
     //off
     win.webContents.send("hid_light_off", "on")
@@ -54,40 +56,75 @@ ipcMain.handle('hid_light_current', async (event) => {
     // yellow
     win.webContents.send("hid_light_yellow", "on")
   }
+}
+
+ipcMain.handle('hid_light_current', async (event) => {
+  var ledVal = Blinken.OFF
+  if (blinken) {
+    handleCurrent( blinken.hidLightStatus() )
+  } else {
+    blinkenClient.send(hid_light_current, "on")
+  }
 })
 
 ipcMain.handle('hid_light_red', async (event) => {
-  blinken.hidLightFeatureRed()
+  if (blinken) { blinken.hidLightFeatureRed() }
+  if (blinkenClient) {
+    blinkenClient.send('hid_light_red', "on")
+  }
 })
 ipcMain.handle('hid_light_green', async (event) => {
-  blinken.hidLightFeatureGreen()
+  if (blinken) { blinken.hidLightFeatureGreen() }
+  if (blinkenClient) {
+    blinkenClient.send('hid_light_green', "on")
+  }
 })
 ipcMain.handle('hid_light_yellow', async (event) => {
-  blinken.hidLightFeatureYellow()
+  if (blinken) { blinken.hidLightFeatureYellow() }
+  if (blinkenClient) {
+    blinkenClient.send('hid_light_yellow', "on")
+  }
 })
 ipcMain.handle('hid_light_orange', async (event) => {
-  blinken.hidLightFeatureYellow()
+  if (blinken) { blinken.hidLightFeatureYellow() }
+  if (blinkenClient) {
+    blinkenClient.send('hid_light_orange', "on")
+  }
 })
 ipcMain.handle('hid_light_off', async (event) => {
-  blinken.hidLightFeatureOff()
-  blinken.stop()
+  if (blinken) { 
+    blinken.hidLightFeatureOff() 
+    blinken.stop()
+  }
+  if (blinkenClient) {
+    blinkenClient.send('hid_light_off', "on")
+  }
 })
 ipcMain.handle('hid_light_blink', async (event) => {
-  blinken.blink()
+  if (blinken) { blinken.blink() }
+  if (blinkenClient) {
+    blinkenClient.send('hid_light_blink', "on")
+  }
 })
 ipcMain.handle('hid_light_blink_ontime', async (event, val) => {
-  blinken.onTime = val
+  if (blinken) { blinken.onTime = val }
+  if (blinkenClient) {
+    blinkenClient.send('hid_light_blink_ontime', val)
+  }
   //console.log("blinken.onTime " + blinken.onTime)
 })
 ipcMain.handle('hid_light_blink_offtime', async (event, val) => {
-  blinken.offTime = val
+  if (blinken) { blinken.offTime = val }
+  if (blinkenClient) {
+    blinkenClient.send('hid_light_blink_offtime', val)
+  }
   //console.log("blinken.offTime " + blinken.offTime)
 })
 
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 1024,
-    height: 800,
+    width: 550,
+    height: 580,
     icon: nativeImage.createFromDataURL(icons.app),
     webPreferences: {
       preload: path.join(app.getAppPath(), 'renderer.js'),
@@ -114,18 +151,54 @@ const createWindow = () => {
     }
   }
   if (device) {
+    // light is plugged in, create blinke with device and enable server 
     blinken = new Blinken(device)
-    blinken.onStatusChange(Blinken.RED, () => {win.webContents.send("hid_light_red", "on")})
-    blinken.onStatusChange(Blinken.GREEN, () => {win.webContents.send("hid_light_green", "on")})
-    blinken.onStatusChange(Blinken.YELLOW, () => {win.webContents.send("hid_light_yellow", "on")})
-    blinken.onStatusChange(Blinken.ORANGE, () => {win.webContents.send("hid_light_orange", "on")})
-    blinken.onStatusChange(Blinken.OFF, () => {win.webContents.send("hid_light_off", "on")})    
+    blinken.onStatusChange(Blinken.RED, () => { win.webContents.send("hid_light_red", "on") })
+    blinken.onStatusChange(Blinken.GREEN, () => { win.webContents.send("hid_light_green", "on") })
+    blinken.onStatusChange(Blinken.YELLOW, () => { win.webContents.send("hid_light_yellow", "on") })
+    blinken.onStatusChange(Blinken.ORANGE, () => { win.webContents.send("hid_light_orange", "on") })
+    blinken.onStatusChange(Blinken.OFF, () => { win.webContents.send("hid_light_off", "on") })
+
+    blinkenServer = new BlinkenTLSServer()
+    blinkenServer.addHandler("hid_light_red", (data) => { blinken.hidLightFeatureRed() })
+    blinkenServer.addHandler("hid_light_green", (data) => { blinken.hidLightFeatureGreen() })
+    blinkenServer.addHandler("hid_light_yellow", (data) => { blinken.hidLightFeatureYellow() })
+    blinkenServer.addHandler("hid_light_orange", (data) => { blinken.hidLightFeaturOrange() })
+    blinkenServer.addHandler("hid_light_off", (data) => { blinken.hidLightFeatureOff() })
+
+    blinkenServer.addHandler("hid_light_blink", (data) => { blinken.blink() })
+    blinkenServer.addHandler("hid_light_blink_ontime", (data) => { blinken.onTime = data })
+    blinkenServer.addHandler("hid_light_blink_offtime", (data) => { blinken.offTime = data })
+
+    blinkenServer.start()
+  } else {
+    console.log("Delcom light not found defaulting to TLS client mode\n")
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+
+    blinkenClient = new BlinkenTLSClient()
+    blinkenClient.addHandler("hid_light_current", (data) => { handleCurrent( data ); win.webContents.send("hid_light_current", data) })
+    
+    blinkenClient.addHandler("hid_light_red", (data) => { win.webContents.send("hid_light_red", data) })
+    blinkenClient.addHandler("hid_light_green", (data) => { win.webContents.send("hid_light_green", data) })
+    blinkenClient.addHandler("hid_light_yellow", (data) => { win.webContents.send("hid_light_yellow", data) })
+    blinkenClient.addHandler("hid_light_orange", (data) => { win.webContents.send("hid_light_orange", data) })
+    blinkenClient.addHandler("hid_light_off", (data) => { win.webContents.send("hid_light_off", data) })
+
+    blinkenClient.addHandler("hid_light_blink", (data) => { win.webContents.send("hid_light_blink", data) })
+    blinkenClient.addHandler("hid_light_blink_ontime", (data) => { win.webContents.send("hid_light_blink_ontime", data) })
+    blinkenClient.addHandler("hid_light_blink_offtime", (data) => { win.webContents.send("hid_light_blink_ontime", data) })
   }
 }
 
 app.on('before-quit', () => {
   if (blinken) {
     blinken.close()
+  }
+  if (blinkenClient) {
+    blinkenClient.close()
+  }
+  if (blinkenServer) {
+    blinkenServer.close()
   }
 })
 
