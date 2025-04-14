@@ -40,7 +40,7 @@ class BlinkenTLSServer {
                 var msgStr = msg.toString()
                 var msgObj = JSON.parse(msgStr)
                 var key = msgObj.key
-                console.log('<---:', msgStr)
+                // console.log('<---:', msgStr)
 
                 var handler = msgHandlers[key]
                 var objBack = {
@@ -57,7 +57,7 @@ class BlinkenTLSServer {
             })
 
             socket.on('end', () => {
-                console.log('bye felicia')
+                // console.log('bye felicia')
             })
 
             socket.on('error', (err) => {
@@ -149,26 +149,26 @@ class BlinkenTLSClient {
 
         client.on('data', (msg) => {
             if (connected === false) {
-                console.log('welcome msg:', msg.toString())
+                // console.log('welcome msg:', msg.toString())
                 connected = true
             } else {
                 response = JSON.parse(msg)
-                console.log('<---:', msg.toString())
+                // console.log('<---:', msg.toString())
                 lock.release()
             }
         })
 
         client.on('end', () => {
-            console.log('bye felicia')
+            // console.log('bye felicia')
         })
 
         client.on('error', (err) => {
             console.error('uh.... wat? ', err)
             client.destroy()
         })
-        console.log("before lock.wait")
+        // console.log("before lock.wait")
         await lock.wait()
-        console.log("after lock.wait")
+        // console.log("after lock.wait")
         client.destroy()
 
         if (response) {

@@ -3,10 +3,10 @@ process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 const client = new BlinkenTLSClient()
 client.addHandler("hid_light_red", (data) => {
-    console.log("hid_light_red! ON")
+    //console.log("hid_light_red! ON")
 })
 client.addHandler("hid_light_off", (data) => {
-    console.log("hid_light_off! ON")
+    //console.log("hid_light_off! ON")
 })
 
 const blink = () => {
