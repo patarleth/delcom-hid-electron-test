@@ -78,7 +78,7 @@ class BlinkenTLSServer {
 
     stop() {
         if (this.socket) {
-            this.server.destroy()
+            this.server.close()
         }
     }
 

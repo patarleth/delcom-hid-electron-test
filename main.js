@@ -94,7 +94,6 @@ ipcMain.handle('hid_light_orange', async (event) => {
 ipcMain.handle('hid_light_off', async (event) => {
   if (blinken) {
     blinken.hidLightFeatureOff()
-    blinken.stop()
   }
   if (blinkenClient) {
     blinkenClient.send('hid_light_off', "on")

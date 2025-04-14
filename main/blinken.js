@@ -109,6 +109,9 @@ class Blinken {
     }
     hidLightFeatureOff(setLastColor = true) {
         this.setColor([0x65, 0x0C, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00], Blinken.OFF, setLastColor)
+        if(setLastColor) {
+            this.stop()
+        }
         if (this.changeHandlers[Blinken.OFF]) {
             this.changeHandlers[Blinken.OFF]()
         }
